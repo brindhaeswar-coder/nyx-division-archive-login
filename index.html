@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYX-ARCHIVE-TERMINAL//UNKNOWN_CONNECTION</title> 
+
+<style>
+:root {
+    --term-color: #20C20E;
+    --bg-color: #020502;
+    --error-color: #ff003c;
+    --dim-color: rgba(32, 194, 14, 0.3);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--term-color);
+    font-family: 'Courier New', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    user-select: none;
+    position: relative;
+}
+
+/* Side Panels */
+.side-panel {
+    position: fixed;
+    top: 20px;
+    bottom: 20px;
+    width: 200px;
+    border: 1px solid var(--dim-color);
+    padding: 10px;
+    font-size: 0.7em;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#left-panel { left: 20px; }
+#right-panel { right: 20px; }
+
+.panel-header {
+    border-bottom: 1px solid var(--term-color);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.scrolling-content {
+    flex-grow: 1;
+    line-height: 1.2em;
+    opacity: 0.6;
+}
+
+/* Main UI */
+#main-ui {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+    text-align: center;
+}
+
+h1 { letter-spacing: 2px; margin-bottom: 20px; }
+.subtitle { opacity: 0.7; margin-bottom: 40px; }
+
+input {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--term-color);
+    color: var(--term-color);
+    font-size: 2.5em;
+    width: 180px;
+    text-align: center;
+    letter-spacing: 15px;
+    outline: none;
+}
+
+button {
+    margin-top: 20px;
+    padding: 12px 25px;
+    background: transparent;
+    border: 1px solid var(--term-color);
+    color: var(--term-color);
+    cursor: pointer;
+    font-family: inherit;
+}
+
+button:hover {
+    background: var(--term-color);
+    color: #000;
+}
+
+#message { margin-top: 25px; font-weight: bold; min-height: 20px; }
+#loading { margin-top: 15px; font-weight: bold; letter-spacing: 2px; display: none; }
+
+/* Lockdown UI */
+#lockdown-ui {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: black;
+    color: var(--error-color);
+    padding: 60px;
+    box-sizing: border-box;
+    z-index: 9999;
+    font-size: 1.2em;
+}
+
+.alert-header {
+    font-size: 3em;
+    text-align: center;
+    border: 4px double var(--error-color);
+    padding: 20px;
+    margin-bottom: 40px;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Matrix background */
+#matrixCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+}
+</style>
+</head>
+<body>
+
+<canvas id="matrixCanvas"></canvas>
+
+<div class="side-panel" id="left-panel">
+    <div class="panel-header">System Telemetry</div>
+    <div class="scrolling-content" id="telemetry-log"></div>
+</div>
+
+<div id="main-ui">
+    <h1>NYX-ARCHIVE-DOOR_03//_</h1> 
+    <p class="subtitle">ENTER 4-DIGIT OVERRIDE CODE</p>
+    <input type="text" id="passcode" maxlength="4" autofocus>
+    <button id="submitBtn">SUBMIT</button>
+    <div id="message"></div>
+    <div id="loading">DECRYPTING: [----------] 0%</div>
+</div>
+
+<div class="side-panel" id="right-panel">
+    <div class="panel-header">Encrypted Stream</div>
+    <div class="scrolling-content" id="stream-log"></div>
+</div>
+
+<div id="lockdown-ui">
+    <div class="alert-header">TERMINAL COMPROMISED</div>
+    <div id="lockdown-logs"></div>
+</div>
+
+<script>
+const input = document.getElementById("passcode");
+const message = document.getElementById("message");
+const submitBtn = document.getElementById("submitBtn");
+const loading = document.getElementById("loading");
+const mainUI = document.getElementById("main-ui");
+const lockdownUI = document.getElementById("lockdown-ui");
+const lockdownLogs = document.getElementById("lockdown-logs");
+const telemetryLog = document.getElementById("telemetry-log");
+const streamLog = document.getElementById("stream-log");
+
+let attempts = 0;
+
+function addSideData() {
+    const telLines = ["CPU: 42%", "RAM: 8.2GB", "KERN: OK", "PORT: 8080", "NODE: 0x3F", "SYNC: TRUE"];
+    const streamChars = "01ABCDEF#$@%";
+    
+    setInterval(() => {
+        const line = document.createElement("div");
+        line.innerText = telLines[Math.floor(Math.random() * telLines.length)] + " [" + Math.random().toString(16).slice(2,6) + "]";
+        telemetryLog.prepend(line);
+        if(telemetryLog.children.length > 25) telemetryLog.lastChild.remove();
+    }, 1000);
+
+    setInterval(() => {
+        let str = "";
+        for(let i=0; i<15; i++) str += streamChars[Math.floor(Math.random() * streamChars.length)];
+        const line = document.createElement("div");
+        line.innerText = str;
+        streamLog.prepend(line);
+        if(streamLog.children.length > 25) streamLog.lastChild.remove();
+    }, 300);
+}
+addSideData();
+
+const canvas = document.getElementById("matrixCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const columns = canvas.width / 20;
+const drops = Array(Math.floor(columns)).fill(1);
+
+function drawMatrix() {
+    ctx.fillStyle = "rgba(0,0,0,0.05)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = "#0F0";
+    ctx.font = "18px monospace";
+    for(let i=0; i<drops.length; i++){
+        const text = String.fromCharCode(33 + Math.random()*94);
+        ctx.fillText(text, i*20, drops[i]*20);
+        if(drops[i]*20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+    }
+    requestAnimationFrame(drawMatrix);
+}
+drawMatrix();
+
+// Fullscreen logic
+function activateFullscreen() {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+    }
+}
+
+function verifyCode() {
+    if (input.value === "0358") {
+        message.style.color = "var(--term-color)";
+        message.innerText = "ACCESS GRANTED";
+        input.disabled = true;
+        submitBtn.disabled = true;
+        loading.style.display = "block";
+        let progress = 0;
+        const loadInterval = setInterval(() => {
+            progress += 10;
+            const bar = "[" + "#".repeat(progress/10) + "-".repeat(10 - progress/10) + "]";
+            loading.innerText = `DECRYPTING: ${bar} ${progress}%`;
+            if (progress >= 100) {
+                clearInterval(loadInterval);
+                window.open("https://docs.google.com/document/d/1pj_73E4hdBglv3e9mH4-BTPdVXh2-sEXLEwJyNltp9w/edit?tab=t.0", "_blank");
+            }
+        }, 200);
+        return;
+    }
+
+    attempts++;
+    input.value = "";
+    if (attempts >= 3) {
+        activateFullscreen(); // Triggers only on the 3rd fail
+        triggerDrasticLockdown();
+    } else {
+        message.style.color = "var(--error-color)";
+        message.innerText = `INVALID OVERRIDE (${attempts}/3)`;
+    }
+}
+
+function triggerDrasticLockdown() {
+    mainUI.style.display = "none";
+    document.getElementById("left-panel").style.display = "none";
+    document.getElementById("right-panel").style.display = "none";
+    lockdownUI.style.display = "block";
+
+    const fakeIP = `192.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`;
+    const logs = [
+        "CRITICAL FAILURE: UNAUTHORIZED ACCESS ATTEMPT",
+        "INITIATING ACTIVE TRACE...",
+        `REMOTE_HOST_IP: ${fakeIP}`,
+        "PHYSICAL LOCATION: [TRACED]",
+        "STREET_ADDRESS: FREMONT",
+        "NOTIFYING LOCAL AUTHORITIES...",
+        "DISPATCHING UNITS TO GEOLOCATION...",
+        "LOCKING PERIMETER. DO NOT DISCONNECT.",
+        "TERMINAL IS NOW PROPERTY OF FEDERAL INVESTIGATION."
+    ];
+
+    let i = 0;
+    const logInterval = setInterval(() => {
+        if (i < logs.length) {
+            const div = document.createElement("div");
+            div.style.marginBottom = "10px";
+            div.innerText = `> ${logs[i]}`;
+            lockdownLogs.appendChild(div);
+            i++;
+        } else {
+            clearInterval(logInterval);
+        }
+    }, 1000);
+}
+
+input.addEventListener("keydown", e => { if(e.key === "Enter") verifyCode(); });
+submitBtn.addEventListener("click", verifyCode);
+input.addEventListener("input", () => { input.value = input.value.replace(/[^0-9]/g,""); });
+
+</script>
+</body>
+</html>
