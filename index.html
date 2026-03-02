@@ -185,7 +185,6 @@ const streamLog = document.getElementById("stream-log");
 
 let attempts = 0;
 
-// Populate Side Panels with fake data
 function addSideData() {
     const telLines = ["CPU: 42%", "RAM: 8.2GB", "KERN: OK", "PORT: 8080", "NODE: 0x3F", "SYNC: TRUE"];
     const streamChars = "01ABCDEF#$@%";
@@ -208,7 +207,6 @@ function addSideData() {
 }
 addSideData();
 
-// Matrix Effect
 const canvas = document.getElementById("matrixCanvas");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
@@ -230,6 +228,18 @@ function drawMatrix() {
     requestAnimationFrame(drawMatrix);
 }
 drawMatrix();
+
+// Fullscreen logic
+function activateFullscreen() {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+    }
+}
 
 function verifyCode() {
     if (input.value === "0358") {
@@ -254,6 +264,7 @@ function verifyCode() {
     attempts++;
     input.value = "";
     if (attempts >= 3) {
+        activateFullscreen(); // Triggers only on the 3rd fail
         triggerDrasticLockdown();
     } else {
         message.style.color = "var(--error-color)";
@@ -273,7 +284,7 @@ function triggerDrasticLockdown() {
         "INITIATING ACTIVE TRACE...",
         `REMOTE_HOST_IP: ${fakeIP}`,
         "PHYSICAL LOCATION: [TRACED]",
-        "STREET_ADDRESS: 1600 PENNSYLVANIA AVENUE NW (SIMULATED)",
+        "STREET_ADDRESS: FREMONT",
         "NOTIFYING LOCAL AUTHORITIES...",
         "DISPATCHING UNITS TO GEOLOCATION...",
         "LOCKING PERIMETER. DO NOT DISCONNECT.",
